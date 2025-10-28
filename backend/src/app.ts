@@ -3,26 +3,25 @@ import cors from "cors"
 import type { CorsOptions } from "cors"
 import cookieParser from "cookie-parser"
 import express, { type Request, type Response } from "express"
-import {auth} from 'express-openid-connect'
-
-const config = {
-  authRequired: false,
-  auth0Logout: true,
-  secret: process.env.AUTH0_SECRET as string,
-  baseURL: process.env.AUTH0_BASE_URL as string,
-  clientID: process.env.AUTH0_CLIENT_ID as string,
-  issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL as string
-}
+import userRoutes from "./routes/user.routes"
+import { clerkMiddleware } from "@clerk/express"
 
 const app = express()
 
 const corsOptions: CorsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow same-origin or non-CORS requests (e.g., direct browser navigations)
     if (!origin) return callback(null, true)
 
-    const allowedOrigins = ["http://localhost:3000", "http://127.0.0.1:3000", process.env.CORS_ORIGIN].filter(
-      (o): o is string => Boolean(o),
-    )
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      process.env.CORS_ORIGIN,
+      // Allow Auth0 domain for the auth POST /callback navigation that may include Origin
+      process.env.AUTH0_ISSUER_BASE_URL?.startsWith("http")
+        ? process.env.AUTH0_ISSUER_BASE_URL
+        : undefined,
+    ].filter((o): o is string => Boolean(o))
 
     if (allowedOrigins.includes(origin)) {
       callback(null, true)
@@ -36,17 +35,13 @@ const corsOptions: CorsOptions = {
 }
 
 app.use(cors(corsOptions))
+app.use(clerkMiddleware())
+
 app.use(express.json({ limit: "16kb" }))
 app.use(express.urlencoded({ extended: true, limit: "16kb" }))
 app.use(cookieParser())
 
+app.use("/api/v1", userRoutes)
 
-app.get("/health", (req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    message: "Server is running successfully",
-    timestamp: new Date().toISOString(),
-  })
-})
 
 export default app

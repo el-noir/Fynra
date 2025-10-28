@@ -20,12 +20,14 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@clerk/express": "^1.7.42",
     "@types/dotenv": "^8.2.3",
     "@types/nodemon": "^3.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "express-oauth2-jwt-bearer": "^1.7.1",
     "express-openid-connect": "^2.19.2",
     "express-validator": "^7.2.1",
     "mongoose": "^8.18.0"
